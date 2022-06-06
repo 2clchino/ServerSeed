@@ -40,8 +40,8 @@ phpでエラーが出たらapt-get ~、vueでエラーが出たらexecしてnpm 
 - requirements.txt
 
 # Usage
-必要のないものは rm -rf して、docker-compose からも消して使います<br>
-使用時には ServerSeed とは別でリポジトリを作成して remote add しましょう<br>
+必要のないものは rm -rf して、docker-compose からも消して使う<br>
+使用時には ServerSeed とは別でリポジトリを作成して remote add するか、せめてブランチを切る<br>
 1. git clone
 2. rename
 3. rm -rf .git
