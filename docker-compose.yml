@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  python_api:
+    build: ./python_api/
+    container_name: api
+    ports:
+      - 8081:8081
+    volumes:
+      - ./python_api/app:/usr/src/app
+    tty: true
+    links:
+      - db
+    command: flask run --host 0.0.0.0 --port 8081
+  
+  web:
+    build: ./web/
+    container_name: web
+    ports:
+      - 8080:8080
+    volumes:
+      - ./web:/src
+    stdin_open: true
+    tty: true
+    command: npm run serve
+
+  db:
+    build: ./db/
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: "secret"
+      MYSQL_DATABASE: "sample_db"
+      MYSQL_USER: "user"
+      MYSQL_PASSWORD: "secret"
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:
+      - ./db/mysql_data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./db/sqls:/docker-entrypoint-initdb.d
+      - ./db/logs:/var/log/mysql
+    ports:
+      - 3306:3306
+
+  php:
+    image: php-composer
+    container_name: php
+    ports:
+      - 8083:8083
+    volumes:
+      - ./php:/php
+    links:
+      - db
+    working_dir: /php
+    environment:
+      CORS_ALLOW_ORIGIN: http://localhost:8080
+    command: php -S 0.0.0.0:8083 -t public
+    tty: true
+
+  go:
+    build:
+      context: ./go
+      dockerfile: ./Dockerfile
+    container_name: go
+    links:
+      - db
+    ports:
+      - "8082:8082"
+    tty: true
+    volumes:
+      - type: bind
+        source: ./go
+        target: /go/src/app
