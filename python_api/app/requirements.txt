@@ -1,2 +1,11 @@
 flask==2.0.1
 flask-cors
+numpy
+pandas
+bs4
+asyncio
+matplotlib
+requests
+sqlalchemy
+mysql-connector-python
+python-dotenv

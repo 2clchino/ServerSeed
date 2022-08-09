@@ -26,7 +26,7 @@ services:
     build: ./db/
     environment:
       MYSQL_ROOT_PASSWORD: "secret"
-      MYSQL_DATABASE: "sample_db"
+      MYSQL_DATABASE: "derby"
       MYSQL_USER: "user"
       MYSQL_PASSWORD: "secret"
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
