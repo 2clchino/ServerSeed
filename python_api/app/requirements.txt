@@ -9,3 +9,6 @@ requests
 sqlalchemy
 mysql-connector-python
 python-dotenv
+seaborn
+sklearn
+discord

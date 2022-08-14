@@ -75,7 +75,8 @@ def race_data_columns():
     "coment_2",
     "trainer",
     "owner",
-    "reward"]
+    "reward",
+    "horse_id"]
 
 def horse_data_columns():
     return [
@@ -108,6 +109,29 @@ def horse_data_columns():
     "winner",
     "reward",
     "race_id"]
+
+def pred_race_columns():
+    return [
+    "frame_number",
+    "horse_number",
+    "mark",
+    "horse_name",
+    "url",
+    "aptitude_course",
+    "aptitude_distance",
+    "aptitude_run",
+    "aptitude_growth",
+    "aptitude_ground",
+    "age",
+    "weight",
+    "jockey",
+    "trainer",
+    "horse_weight",
+    "blank_2",
+    "blank_3",
+    "blank_4",
+    "blank_5",
+    "horse_id"]
 
 def clear_all_str(df):
     df = df.drop(columns = ["horse_name", "age", "horse_data_key", "odds", "popularity", "horse_number"], errors = 'ignore')
@@ -185,6 +209,7 @@ def get_old_race_info_from_text(header_flg, text, table_name, race_id, race_name
                 if header_flg:
                     r_cols = elem.find_all("th")
             if not r_cols==None:
+                id = ""
                 for r_col in r_cols:
                     scores = []
                     tmp_text = r_col.text
@@ -192,17 +217,19 @@ def get_old_race_info_from_text(header_flg, text, table_name, race_id, race_name
                     if not link==None:
                         tmp = link.get('href')
                         if 'horse' in tmp and not '?pid' in tmp:
+                            id = tmp[7:-1]
                             horse_id.append(tmp[:-1])
-                            (name, scores) = get_horse_data(tmp[:-1], race_id, race_name)
+                            (name, scores) = get_horse_data(tmp[:-1])
                             horse_names.append(name)
                     tmp_text = tmp_text.replace("\n", "")
                     row_info.append(tmp_text.strip())
                     for score in scores:
                         row_info.append(score[0])
+                row_info.append(id)
                 info.append(row_info)
         return (info, horse_id, horse_names)
     except:
-        print("err")
+        print("err a")
         return None
 
 def get_race_info_from_text(text, table_name, race_id, race_name):
@@ -218,6 +245,7 @@ def get_race_info_from_text(text, table_name, race_id, race_name):
             scores = []
             r_cols = elem.find_all("td")
             if not r_cols==None:
+                id = ""
                 for r_col in r_cols:
                     if (not r_col==None):
                         tmp_text = r_col.text
@@ -228,12 +256,14 @@ def get_race_info_from_text(text, table_name, race_id, race_name):
                             if not link==None:
                                 r_a = link.get("href")
                                 if "horse/" in r_a:
+                                    id = r_a[30:]
                                     row_info.append(r_a)
                                     horse_id.append(r_a[23:])
-                                    (name, scores) = get_horse_data(r_a[23:], race_id, race_name)
+                                    (name, scores) = get_horse_data(r_a[23:])
                                     horse_names.append(name)
                                     for score in scores:
                                         row_info.append(score[0])
+                row_info.append(id)
             info.append(row_info)
         return (info, horse_id, horse_names)
     except:
@@ -285,6 +315,24 @@ def get_horse_info_from_text(header_flg, text, table_name):
         print("err")
         return None
 
+def get_pred_race_id(text):
+    try:
+        soup = bs4.BeautifulSoup(text, "html.parser")
+        base_elem = soup.findAll("div", class_="Top_RaceMenu_Inner")
+        pred_id = ""
+        for elem in base_elem:
+            cols = elem.findAll("a")
+            for col in cols:
+                link = col.get('href')
+                if ("race_id=" in link):
+                    tmp = link.split("race_id=")
+                    pred_id = tmp[1][:12]
+                    break
+        return pred_id
+    except:
+        print("err")
+        return None
+
 def get_name_from_text(text):
     try:
         soup = bs4.BeautifulSoup(text, "html.parser")
@@ -294,7 +342,7 @@ def get_name_from_text(text):
         print("err")
         return None
 
-def get_horse_data(horse_id, race_id, race_name):
+def get_horse_data(horse_id):
     URL_BASE = "https://db.netkeiba.com"
     HORSE_TABLE_NAME = "db_h_race_results nk_tb_common"
     url = URL_BASE + horse_id
@@ -304,7 +352,7 @@ def get_horse_data(horse_id, race_id, race_name):
     if not tmp==None:
         horse_name = tmp.replace('競馬データベース - netkeiba.com', '').split(' ')
         print(horse_name[0])
-        file_path = "csv/horse/" + race_id[0:4] + race_name + "/" + horse_name[0] + ".csv"
+        file_path = "data/" + horse_id + ".csv"
         with open(file_path, "w", newline="", encoding='shift_jis') as f:
             writer = csv.writer(f)
             writer.writerows(info)

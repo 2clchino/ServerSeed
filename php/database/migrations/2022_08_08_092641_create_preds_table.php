@@ -16,6 +16,7 @@ class CreatePredsTable extends Migration
         Schema::create('preds', function (Blueprint $table) {
 		$table->increments('id');
 		$table->string('race_id');
+		$table->string('file_path');
             	$table->timestamps();
         });
     }
