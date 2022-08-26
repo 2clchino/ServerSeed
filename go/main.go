@@ -34,11 +34,17 @@ type PostData struct {
 	Pass string `json:"pass"`
 }
 
+type ScoreData struct {
+	Name  string `json:"name"`
+	Score int    `json:"score"`
+}
+
+var score_board map[string]int
+
 func main() {
 	var err error
 	day_format := "2006-01-02"
 	day := time.Now().Format(day_format)
-
 	logfile, err := os.OpenFile("./logs/"+day+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		panic("cannnot open test.log:" + err.Error())
@@ -51,8 +57,11 @@ func main() {
 	if err != nil {
 		log.Printf("Failed to Load .env")
 	}
+
+	score_board = make(map[string]int)
 	http.HandleFunc("/data", GetData)
-	http.HandleFunc("/user/reg", regUser)
+	http.HandleFunc("/user/reg", RegUser)
+	http.HandleFunc("/score", AddScore)
 	log.Fatal(http.ListenAndServe(":8082", nil))
 	log.Printf("Server Started.")
 }
@@ -93,7 +102,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func regUser(w http.ResponseWriter, r *http.Request) {
+func RegUser(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Faild to Parse POST request")
 		return
@@ -113,6 +122,40 @@ func regUser(w http.ResponseWriter, r *http.Request) {
 	rn_datas = append(rn_datas, rn_data)
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	data, _ := json.Marshal(rn_datas)
+	log.Printf(string(data))
+	_, err := fmt.Fprint(w, string(data))
+	if err != nil {
+		return
+	}
+}
+
+func AddScore(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("Faild to Parse POST request")
+		return
+	}
+	bufbody := new(bytes.Buffer)
+	bufbody.ReadFrom(r.Body)
+	body := bufbody.String()
+	var post_data ScoreData
+	if err := json.Unmarshal([]byte(body), &post_data); err != nil {
+		panic(err)
+	}
+	log.Printf(post_data.Name, post_data.Score)
+	_, isThere := score_board[post_data.Name]
+	if isThere {
+		if post_data.Score > score_board[post_data.Name] {
+			score_board[post_data.Name] = post_data.Score
+		}
+	} else {
+		score_board[post_data.Name] = post_data.Score
+	}
+
+	var rn_data ScoreData
+	rn_data.Name = post_data.Name
+	rn_data.Score = score_board[post_data.Name]
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	data, _ := json.Marshal(rn_data)
 	log.Printf(string(data))
 	_, err := fmt.Fprint(w, string(data))
 	if err != nil {
