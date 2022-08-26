@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -23,8 +25,13 @@ type ItemData struct {
 }
 
 type ReturnData struct {
-	Id        		int       	`json:"id"`
-	Name     		string  	`json:"name"`
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type PostData struct {
+	Name string `json:"name"`
+	Pass string `json:"pass"`
 }
 
 func main() {
@@ -45,6 +52,7 @@ func main() {
 		log.Printf("Failed to Load .env")
 	}
 	http.HandleFunc("/data", GetData)
+	http.HandleFunc("/user/reg", regUser)
 	log.Fatal(http.ListenAndServe(":8082", nil))
 	log.Printf("Server Started.")
 }
@@ -72,10 +80,37 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	var rn_datas []ReturnData
 	for i := 0; i < 5; i++ {
 		var rn_data ReturnData
-		rn_data.Id=i
-		rn_data.Name="Dammy"
+		rn_data.Id = i
+		rn_data.Name = "Dammy"
 		rn_datas = append(rn_datas, rn_data)
 	}
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	data, _ := json.Marshal(rn_datas)
+	log.Printf(string(data))
+	_, err := fmt.Fprint(w, string(data))
+	if err != nil {
+		return
+	}
+}
+
+func regUser(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("Faild to Parse POST request")
+		return
+	}
+	bufbody := new(bytes.Buffer)
+	bufbody.ReadFrom(r.Body)
+	body := bufbody.String()
+	var post_data PostData
+	if err := json.Unmarshal([]byte(body), &post_data); err != nil {
+		panic(err)
+	}
+	log.Printf(post_data.Name, post_data.Pass)
+	var rn_datas []ReturnData
+	var rn_data ReturnData
+	rn_data.Id = 0
+	rn_data.Name = post_data.Name
+	rn_datas = append(rn_datas, rn_data)
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	data, _ := json.Marshal(rn_datas)
 	log.Printf(string(data))
