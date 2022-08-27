@@ -35,7 +35,7 @@ type PostData struct {
 }
 
 type ScoreData struct {
-	Name  string `json:"name"`
+	Token string `json:"token"`
 	Score int    `json:"score"`
 }
 
@@ -57,11 +57,11 @@ func main() {
 	if err != nil {
 		log.Printf("Failed to Load .env")
 	}
-
 	score_board = make(map[string]int)
 	http.HandleFunc("/data", GetData)
 	http.HandleFunc("/user/reg", RegUser)
-	http.HandleFunc("/score", AddScore)
+	http.HandleFunc("/wio/score", AddScore)
+	http.HandleFunc("/wio/reg", RegTerm)
 	log.Fatal(http.ListenAndServe(":8082", nil))
 	log.Printf("Server Started.")
 }
@@ -95,6 +95,20 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	data, _ := json.Marshal(rn_datas)
+	log.Printf(string(data))
+	_, err := fmt.Fprint(w, string(data))
+	if err != nil {
+		return
+	}
+}
+
+func RegTerm(w http.ResponseWriter, r *http.Request) {
+	var rn_data ScoreData
+	rn_data.Score = 0
+	rn_data.Token = CreateID()
+	score_board[rn_data.Token] = rn_data.Score
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	data, _ := json.Marshal(rn_data)
 	log.Printf(string(data))
 	_, err := fmt.Fprint(w, string(data))
 	if err != nil {
@@ -141,19 +155,19 @@ func AddScore(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal([]byte(body), &post_data); err != nil {
 		panic(err)
 	}
-	log.Printf(post_data.Name, post_data.Score)
-	_, isThere := score_board[post_data.Name]
+	log.Printf(post_data.Token, post_data.Score)
+	_, isThere := score_board[post_data.Token]
 	if isThere {
-		if post_data.Score > score_board[post_data.Name] {
-			score_board[post_data.Name] = post_data.Score
+		if post_data.Score > score_board[post_data.Token] {
+			score_board[post_data.Token] = post_data.Score
 		}
 	} else {
-		score_board[post_data.Name] = post_data.Score
+		score_board[post_data.Token] = post_data.Score
 	}
 
 	var rn_data ScoreData
-	rn_data.Name = post_data.Name
-	rn_data.Score = score_board[post_data.Name]
+	rn_data.Token = post_data.Token
+	rn_data.Score = score_board[post_data.Token]
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	data, _ := json.Marshal(rn_data)
 	log.Printf(string(data))
